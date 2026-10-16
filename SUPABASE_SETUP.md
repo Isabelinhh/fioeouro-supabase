@@ -1,40 +1,14 @@
 # Configurando o Supabase — Ouro & Fio (React + Vite + Capacitor)
 
-## 1. Criar a tabela `servicos`
+## 1. Criar as tabelas e as políticas de segurança (RLS)
 
-No SQL Editor do seu projeto Supabase, rode:
+No **SQL Editor** do Supabase, cole e rode todo o conteúdo de
+`supabase/schema.sql`. Ele cria `servicos` (com os 8 serviços do salão) e
+`agendamentos`, ativa o RLS e define as policies: só usuários logados leem os
+serviços e cada usuário acessa apenas os próprios agendamentos.
 
-```sql
-create table servicos (
-  id text primary key,
-  nome text not null,
-  duracao text,
-  preco numeric not null
-);
-
--- Habilita Row Level Security
-alter table servicos enable row level security;
-
--- Permite leitura pública (o app só faz SELECT, então é seguro)
-create policy "Leitura pública de serviços"
-on servicos for select
-to anon
-using (true);
-```
-
-Popule com os serviços do salão:
-
-```sql
-insert into servicos (id, nome, duracao, preco) values
-  ('corte-fem', 'Corte feminino', '50 min', 120),
-  ('corte-masc', 'Corte masculino', '30 min', 70),
-  ('escova', 'Escova modelada', '45 min', 90),
-  ('coloracao', 'Coloração global', '2h', 220),
-  ('balayage', 'Mechas / Balayage', '3h', 380),
-  ('hidratacao', 'Hidratação profunda', '40 min', 95),
-  ('botox', 'Botox capilar', '1h30', 160),
-  ('barba', 'Barba', '25 min', 55);
-```
+> A leitura pública (anon) que existia antes foi removida: agora o app inteiro
+> exige login. Veja `AUTH_SETUP.md` para configurar o login e o Google.
 
 ## 2. Instalar dependências
 
@@ -97,7 +71,8 @@ variables > Actions):
 | SDK do Supabase | `@supabase/supabase-js` no `package.json` |
 | `supabaseClient.js` | `src/services/supabaseClient.js` |
 | Componente com `useState`/`useEffect` | `src/App.jsx` (busca a tabela `servicos`) |
-| Tabela remota (`produtos` no roteiro) | tabela `servicos` no Supabase |
+| Tabela remota (`produtos` no roteiro) | tabelas `servicos` e `agendamentos` no Supabase |
+| Autenticação | `src/context/AuthContext.jsx`, `src/components/AuthScreen.jsx`, `ProtectedRoute.jsx` |
 
 O restante da interatividade original do site (menu mobile, assistente de
 agendamento, câmera, carrossel de depoimentos) foi migrado para dentro de um

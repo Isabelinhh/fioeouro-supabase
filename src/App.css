@@ -470,7 +470,7 @@
 
   /* ---------- RESPONSIVE ---------- */
   @media (max-width:920px){
-    nav, .nav-cta{display:none;}
+    nav, .nav-cta, .user-slot{display:none;}
     .burger{display:flex;}
     .about, .menu-grid, .team-grid{grid-template-columns:1fr;}
     .footer-grid{grid-template-columns:1fr 1fr;}
@@ -487,3 +487,75 @@
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}
   }
+
+
+  /* ---------- AUTENTICAÇÃO ---------- */
+  .auth-splash{
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;color:var(--cream-dim);
+  }
+  .auth-page{
+    min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
+    padding:max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    background:
+      radial-gradient(circle at 20% 0%, rgba(198,161,91,0.14), transparent 55%),
+      var(--black);
+  }
+  .auth-card{
+    width:100%;max-width:420px;
+    background:var(--black-soft);
+    border:1px solid var(--line);
+    padding:36px 28px 30px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  .auth-logo{font-size:1.6rem;margin-bottom:6px;}
+  .auth-title{font-family:var(--serif);font-weight:400;font-size:1.9rem;margin:14px 0 6px;line-height:1.15;}
+  .auth-sub{color:var(--cream-dim);font-size:0.95rem;margin-bottom:24px;}
+
+  .auth-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin-bottom:18px;}
+  .auth-tabs button{
+    background:transparent;border:0;color:var(--cream-dim);padding:13px 0;
+    font-size:0.78rem;letter-spacing:0.14em;text-transform:uppercase;transition:all .25s;
+  }
+  .auth-tabs button.active{background:var(--gold);color:var(--black);font-weight:500;}
+
+  .btn-google{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+    background:#fff;color:#1f1f1f;border:0;padding:14px 18px;min-height:48px;
+    font-size:0.95rem;font-weight:500;letter-spacing:0.01em;border-radius:2px;transition:opacity .2s;
+  }
+  .btn-google:hover{opacity:0.92;}
+  .btn-google:disabled, .auth-submit:disabled{opacity:0.55;cursor:not-allowed;}
+
+  .auth-divider{display:flex;align-items:center;gap:14px;margin:22px 0;color:var(--cream-dim);font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;}
+  .auth-divider::before, .auth-divider::after{content:'';flex:1;height:1px;background:var(--line-light);}
+
+  .auth-card .field input{font-size:16px;} /* evita zoom automático no iOS/Android */
+  .auth-submit{width:100%;min-height:50px;margin-top:4px;}
+  .auth-msg{font-size:0.88rem;line-height:1.45;padding:12px 14px;margin:2px 0 16px;border-left:2px solid;}
+  .auth-erro{color:#f0a496;border-color:#e07b6a;background:rgba(224,123,106,0.08);}
+  .auth-ok{color:var(--gold-light);border-color:var(--gold);background:rgba(198,161,91,0.08);}
+  .auth-switch{text-align:center;margin-top:22px;color:var(--cream-dim);font-size:0.9rem;}
+  .auth-switch button{background:none;border:0;color:var(--gold);font-size:inherit;text-decoration:underline;padding:4px;}
+
+  /* perfil do usuário no header / menu mobile */
+  .user-slot{display:flex;align-items:center;margin-left:18px;}
+  .user-menu{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+  .user-initial{
+    display:flex;align-items:center;justify-content:center;
+    background:var(--gold);color:var(--black);font-weight:500;font-size:0.9rem;
+  }
+  .user-info{display:flex;flex-direction:column;line-height:1.2;}
+  .user-name{font-size:0.82rem;color:var(--cream);}
+  .user-email{font-size:0.72rem;color:var(--cream-dim);}
+  .user-logout{
+    background:transparent;border:1px solid var(--line);color:var(--cream-dim);
+    padding:7px 14px;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;transition:all .25s;
+  }
+  .user-logout:hover{border-color:var(--gold);color:var(--gold);}
+  .user-slot-mobile{margin-top:8px;padding-top:26px;border-top:1px solid var(--line);}
+  .user-menu.compact{flex-direction:column;gap:10px;text-align:center;}
+  .user-menu.compact .user-info{align-items:center;}
+  .user-menu.compact .user-avatar{width:44px;height:44px;}
+  .user-menu.compact .user-logout{padding:12px 32px;font-size:0.78rem;}

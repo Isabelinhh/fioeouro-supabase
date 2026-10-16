@@ -1,0 +1,4 @@
+Prints gerados em teste local da interface (celular 390px e desktop).
+A sessao dos prints 03 e 04 foi simulada. Os prints do painel do Supabase
+(Authentication > Users, Table Editor > agendamentos) e do login real com
+Google precisam ser tirados por voce depois de configurar as credenciais.

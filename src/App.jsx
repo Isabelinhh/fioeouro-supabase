@@ -1,9 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from './services/supabaseClient';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import UserMenu from './components/UserMenu';
 import { SERVICOS_FALLBACK, STYLISTS, HOURS } from './data/fallbackData';
 import { BEFORE_SERVICE_GRID, AFTER_SERVICE_GRID } from './data/markup';
 
-export default function App() {
+// Conteúdo interno do Fio & Ouro (só é montado com usuário logado).
+function Site() {
+  const { user, perfil } = useAuth();
+  const userRef = useRef(user);
+  userRef.current = user;
+  const perfilRef = useRef(perfil);
+  perfilRef.current = perfil;
+
+  // Pontos do markup original onde o perfil/Sair são encaixados (portals)
+  const [slotHeader, setSlotHeader] = useState(null);
+  const [slotMobile, setSlotMobile] = useState(null);
+  useEffect(() => {
+    setSlotHeader(document.getElementById('userSlot'));
+    setSlotMobile(document.getElementById('userSlotMobile'));
+  }, []);
+
   const [servicos, setServicos] = useState(SERVICOS_FALLBACK);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
@@ -69,9 +88,10 @@ export default function App() {
 
     // ---------- header scroll state ----------
     const header = document.getElementById('siteHeader');
-    window.addEventListener('scroll', () => {
+    const onScroll = () => {
       header.classList.toggle('scrolled', window.scrollY > 40);
-    });
+    };
+    window.addEventListener('scroll', onScroll);
 
     // ---------- mobile menu ----------
     const burger = document.getElementById('burger');
@@ -98,6 +118,24 @@ export default function App() {
     // serviço feita via JSX/onClick mais abaixo no App.jsx).
     let bookedSlots = new Set(['camila|__TODAY__|10:00','rafael|__TODAY__|14:00']);
     let bookingCounter = 128; // fake running counter for confirmation codes
+
+    // Pré-preenche o nome com o do perfil logado
+    const nomeInicial = perfilRef.current?.nome;
+    if (nomeInicial) document.getElementById('nameInput').value = nomeInicial;
+
+    // Reaproveita os horários já reservados por este usuário no Supabase
+    // (a RLS garante que a consulta só devolve as linhas dele).
+    const isoHoje = new Date().toISOString().split('T')[0];
+    supabase
+      .from('agendamentos')
+      .select('profissional_id, data, hora')
+      .then(({ data, error }) => {
+        if (error) { console.error('Erro ao buscar agendamentos:', error.message); return; }
+        (data || []).forEach((a) => {
+          const dk = a.data === isoHoje ? '__TODAY__' : a.data;
+          bookedSlots.add(`${a.profissional_id}|${dk}|${a.hora}`);
+        });
+      });
 
     // ---------- render stylist choices ----------
     const stylistGrid = document.getElementById('stylistGrid');
@@ -267,19 +305,54 @@ export default function App() {
     }
 
     // ---------- confirm booking ----------
-    document.getElementById('confirmBtn').addEventListener('click', () => {
+    document.getElementById('confirmBtn').addEventListener('click', async () => {
       const name = document.getElementById('nameInput').value.trim();
       const phone = document.getElementById('phoneInput').value.trim();
       if(!name || !phone){
         toast('Preencha nome e telefone para confirmar.');
         return;
       }
-      const dateKey = state.date === isoToday ? '__TODAY__' : state.date;
-      const key = `${state.stylist.id}|${dateKey}|${state.time}`;
-      bookedSlots.add(key); // held in memory only — resets on reload
+      if(!userRef.current){
+        toast('Sua sessão expirou. Entre novamente.');
+        return;
+      }
 
-      bookingCounter++;
-      const code = '#OF-' + String(bookingCounter).padStart(4,'0');
+      const btn = document.getElementById('confirmBtn');
+      btn.disabled = true;
+
+      // Grava no Supabase. A RLS só aceita a linha se user_id = auth.uid().
+      const { data: salvo, error } = await supabase
+        .from('agendamentos')
+        .insert({
+          user_id: userRef.current.id,
+          servico_id: state.service.id,
+          servico_nome: state.service.name,
+          profissional_id: state.stylist.id,
+          profissional_nome: state.stylist.name,
+          data: state.date,
+          hora: state.time,
+          nome_cliente: name,
+          telefone: phone,
+          preco: state.service.price,
+        })
+        .select('codigo')
+        .single();
+
+      btn.disabled = false;
+
+      if(error){
+        // 23505 = violação da restrição de unicidade (horário já ocupado)
+        toast(error.code === '23505'
+          ? 'Esse horário acabou de ser reservado. Escolha outro.'
+          : 'Não foi possível salvar o agendamento. Tente novamente.');
+        console.error('Erro ao salvar agendamento:', error.message);
+        return;
+      }
+
+      const dateKey = state.date === isoToday ? '__TODAY__' : state.date;
+      bookedSlots.add(`${state.stylist.id}|${dateKey}|${state.time}`);
+
+      const code = '#OF-' + String(salvo.codigo).padStart(4,'0');
       document.getElementById('confirmCode').textContent = code;
       const dateLabel = new Date(state.date + 'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit', month:'long'});
       document.getElementById('confirmText').textContent =
@@ -327,7 +400,7 @@ export default function App() {
       document.querySelectorAll('#tDots span').forEach((d,idx) => d.classList.toggle('active', idx===i));
       tIndex = i;
     }
-    setInterval(() => showTestimonial((tIndex + 1) % testimonials.length), 5000);
+    const carrosselTimer = setInterval(() => showTestimonial((tIndex + 1) % testimonials.length), 5000);
 
     // ---------- reveal-on-scroll for sections ----------
     const io = new IntersectionObserver(entries => {
@@ -348,6 +421,13 @@ export default function App() {
     document.querySelector('.hero').style.opacity = 1;
     document.querySelector('.hero').style.transform = 'none';
 
+    // Limpeza: o Site é desmontado ao sair da conta e remontado ao entrar.
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearInterval(carrosselTimer);
+      io.disconnect();
+      stopCamStream();
+    };
   }, []);
 
   function selecionarServico(servico, el) {
@@ -391,6 +471,19 @@ export default function App() {
       </div>
 
       <div dangerouslySetInnerHTML={{ __html: AFTER_SERVICE_GRID }} />
+
+      {slotHeader && createPortal(<UserMenu />, slotHeader)}
+      {slotMobile && createPortal(<UserMenu compact />, slotMobile)}
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <Site />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }

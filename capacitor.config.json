@@ -1,5 +1,5 @@
 {
   "appId": "com.fioeouro",
   "appName": "Fio e Ouro",
-  "webDir": "www"
+  "webDir": "dist"
 }

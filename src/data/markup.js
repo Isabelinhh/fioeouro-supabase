@@ -16,6 +16,7 @@ export const BEFORE_SERVICE_GRID = `
     </ul>
   </nav>
   <a href="#agendar" class="nav-cta">Agendar</a>
+  <div id="userSlot" class="user-slot"></div>
   <div class="burger" id="burger"><span></span><span></span><span></span></div>
 </header>
 
@@ -26,6 +27,7 @@ export const BEFORE_SERVICE_GRID = `
   <a href="#equipe" class="mlink">Equipe</a>
   <a href="#agendar" class="mlink">Agendar</a>
   <a href="#contato" class="mlink">Contato</a>
+  <div id="userSlotMobile" class="user-slot-mobile"></div>
 </div>
 
 <!-- ===== HERO ===== -->
@@ -124,7 +126,7 @@ export const BEFORE_SERVICE_GRID = `
   <div class="section-head">
     <span class="eyebrow">Reserve seu horário</span>
     <h2>Agendamento</h2>
-    <p>Sistema totalmente funcional em seu navegador — sem envio de dados a servidores. Ao recarregar a página, os horários voltam ao estado inicial.</p>
+    <p>Escolha serviço, profissional e horário. Seus agendamentos ficam salvos na sua conta.</p>
   </div>
 
   <div class="booking-wrap">
